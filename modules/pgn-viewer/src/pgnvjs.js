@@ -434,7 +434,7 @@ let pgnBase = function (boardId, configuration) {
         let bottomTime = createEle("div", null, "bottomTime", theme, bottomInnerBoardDiv);
 
         /** Buttons */
-        if (hasMode('view') || hasMode('edit')) {
+        if (hasMode('view') || hasMode('edit') || hasMode('puzzle')) {
             const buttonsBoardDiv = createEle("div", id('buttonsId'), "buttons", theme, divBoard);
             generateViewButtons(buttonsBoardDiv);
             if ( that.configuration.colorMarker ) {
@@ -449,7 +449,7 @@ let pgnBase = function (boardId, configuration) {
         updateUI(null)
 
         /** Fen */
-        if ((hasMode('edit') || hasMode('view')) && (that.configuration.showFen)) {
+        if ((hasMode('edit') || hasMode('view') || hasMode('puzzle')) && (that.configuration.showFen)) {
             const fenDiv = createEle("textarea", id('fenId'), "fen", theme, outerInnerBoardDiv);
             addEventListener(id('fenId'), 'mousedown', function (e) {
                 e = e || window.event;
@@ -470,7 +470,7 @@ let pgnBase = function (boardId, configuration) {
         }
 
         /** Moves Div */
-        if (hasMode('print') || hasMode('view') || hasMode('edit')) {
+        if (hasMode('print') || hasMode('view') || hasMode('edit') || hasMode('puzzle')) {
             createEle("div", id('movesId'), "moves " + that.configuration.notationLayout,
                 null, divBoard);
             if (hasMode('print')) {
@@ -995,7 +995,7 @@ let pgnBase = function (boardId, configuration) {
             if (next) {
                 fillComment(next);
             }
-        } else if (hasMode('view')) {
+        } else if (hasMode('view') || hasMode('puzzle')) {
             let col = game.turn() == 'w' ? 'white' : 'black';
             that.board.set({
                 movable: Object.assign({}, that.board.state.movable, {color: col}),

@@ -99,4 +99,22 @@ let pgnPrint = function (boardId, configuration) {
     return base
 }
 
-export {pgnBoard, pgnEdit, pgnBase, pgnPrint, pgnView}
+/**
+ * Defines the utility function to display the board in puzzle mode.
+ * Board is displayed after first move and waiting on user who is supposed to find a move.
+ * After bad move the puzzle failed is announced and user can continue in her mission.
+ * @param boardId the unique ID per HTML page
+ * @param configuration the configuration for chess, board and pgn.
+ *      See the configuration of `pgnBoard` for the board configuration. Relevant for pgn is:
+ *   pgn: the pgn as single string, or empty string (default)
+ * @returns {{base}} base: all utility functions available, board: reference to Chessground
+ */
+let pgnPuzzle = function (boardId, configuration) {
+    let base = pgnBase(boardId, Object.assign({mode: 'puzzle'}, configuration))
+    base.generateHTML()
+    let board = base.generateBoard()
+    base.generateMoves()
+    return {base, board}
+}
+
+export {pgnBoard, pgnEdit, pgnBase, pgnPrint, pgnView, pgnPuzzle}

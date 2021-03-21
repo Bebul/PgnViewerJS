@@ -107,6 +107,19 @@
     overflow: auto;
 }
 
+.pgnvjs.puzzleMode.layout-left .buttons, .whole.editMode.layout-right .buttons {
+    grid-column: 1 / 2;
+}
+
+.pgnvjs.puzzleMode.layout-right .buttons, .whole.editMode.layout-left .buttons {
+    grid-column: 2 / 3;
+}
+
+.pgnvjs.puzzleMode.layout-left .moves, .whole.puzzleMode.layout-right .moves {
+    grid-row: 3 / 5;
+    overflow: auto;
+}
+
 .pgnvjs.editMode.layout-left .edit {
     grid-column: 1 / 2;
     grid-row: 4 / 5;
