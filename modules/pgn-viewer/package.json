@@ -20,9 +20,9 @@
     "url": "https://github.com/mliebelt/PgnViewerJS.git"
   },
   "scripts": {
-    "build": "../../node_modules/.bin/webpack --config webpack.prod.js",
-    "start": "../../node_modules/.bin/webpack serve --config webpack.dev.js",
-    "gen_i18n": "./bin/gen-i18n.js"
+    "build": "..\\..\\node_modules\\.bin\\webpack --config webpack.prod.js",
+    "start": "..\\..\\node_modules\\.bin\\webpack serve --config webpack.dev.js",
+    "gen_i18n": ".\\bin\\gen-i18n.js"
   },
   "dependencies": {
     "@mliebelt/pgn-reader": "^1.2.1",
