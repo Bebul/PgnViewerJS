@@ -110,10 +110,25 @@ let pgnPrint = function (boardId, configuration) {
  * @returns {{base}} base: all utility functions available, board: reference to Chessground
  */
 let pgnPuzzle = function (boardId, configuration) {
-    let base = pgnBase(boardId, Object.assign({mode: 'puzzle'}, configuration))
+    let base = pgnBase(boardId, Object.assign(
+      {
+          showFen: true, mode: 'puzzle',
+          movable: {
+              free: false,
+              events: {
+                  after: function (orig, dest, meta) {
+                      console.log("move triggered: orig=" + orig + " dest=" + dest);
+                      base.onPuzzleMove(orig, dest, meta);
+                  }
+              }
+          },
+          viewOnly: false
+      },
+      configuration))
+
     base.generateHTML()
-    let board = base.generateBoard()
     base.generateMoves()
+    let board = base.generateBoard()
     return {base, board}
 }
 

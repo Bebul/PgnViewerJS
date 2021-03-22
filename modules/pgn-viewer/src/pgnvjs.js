@@ -1,5 +1,6 @@
 import i18next from './i18n';
-import {pgnReader, Utils} from '@mliebelt/pgn-reader';
+//import {pgnReader, Utils} from '@mliebelt/pgn-reader';
+import {pgnReader, Utils} from "../../pgn-reader/src/pgn";
 import {Chessground} from 'chessground';
 import 'chessground/assets/chessground.base.css'
 import 'chessground/assets/chessground.brown.css'
@@ -203,6 +204,30 @@ let pgnBase = function (boardId, configuration) {
         game.undo()
         onSnapEnd(m.from, m.to)
         that.board.set({fen: game.fen()})
+    }
+
+    const onPuzzleMove = function (from, to, meta) {
+        let cur = that.currentMove;
+        let nextMove = that.mypgn.getMove(cur+1);
+        if (nextMove.from===from && nextMove.to===to) {
+            console.log("bravo!")
+            let next = cur+2;
+            if (next < that.mypgn.getMoves().length) {
+                let fen = that.mypgn.getMove(next).fen;
+                makeMove(next-1, next, fen);
+            } else {
+                console.log("PUZZLE finished - moving disabled");
+                that.board.set({
+                    movable: {
+                        free: false,
+                        color: undefined
+                    }
+                })
+            }
+        } else {
+            console.log("no, it is not correct move")
+            makeMove(cur, cur, null);
+        }
     }
 
     /**
@@ -636,6 +661,13 @@ let pgnBase = function (boardId, configuration) {
         let smallerWidth = currentWidth - moduloWidth;
         // Ensure that boardWidth is a multiply of 8
         boardConfiguration.width = "" + smallerWidth +"px";
+
+        if (hasMode('puzzle')) {
+          game.load(that.configuration.position);
+          let theOrientation = (game.turn() == 'w') ? 'black' : 'white';
+          boardConfiguration.orientation = theOrientation;
+        }
+
         that.board = Chessground(el, boardConfiguration);
         //console.log("Board width: " + board.width);
         if (boardConfiguration.width) {
@@ -676,6 +708,15 @@ let pgnBase = function (boardId, configuration) {
             that.board.set({
                 movable: Object.assign({}, that.board.state.movable,
                     {color: toMove, dests: possibleMoves(game), showDests: true}),
+                turnColor: toMove, check: game.in_check()
+            });
+        }
+        if (hasMode('puzzle')) {
+            makeMove(null,0,null);
+            //game.load(boardConfiguration.position);
+            let toMove = (game.turn() == 'w') ? 'white' : 'black';
+            that.board.set({
+                movable: Object.assign({}, that.board.state.movable, {color: toMove, dests: possibleMoves(game)}),
                 turnColor: toMove, check: game.in_check()
             });
         }
@@ -995,10 +1036,16 @@ let pgnBase = function (boardId, configuration) {
             if (next) {
                 fillComment(next);
             }
-        } else if (hasMode('view') || hasMode('puzzle')) {
+        } else if (hasMode('view')) {
             let col = game.turn() == 'w' ? 'white' : 'black';
             that.board.set({
                 movable: Object.assign({}, that.board.state.movable, {color: col}),
+                turnColor: col, check: game.in_check()
+            });
+        } else if (hasMode('puzzle')) {
+            let col = game.turn() == 'w' ? 'white' : 'black';
+            that.board.set({
+                movable: Object.assign({}, that.board.state.movable, {color: col, dests: possibleMoves(game)}),
                 turnColor: col, check: game.in_check()
             });
         }
@@ -1067,6 +1114,9 @@ let pgnBase = function (boardId, configuration) {
             }
         }
         let myMoves = that.mypgn.getMoves();
+        if (hasMode('puzzle')) {
+            that.configuration.position = that.mypgn.configuration.position;
+        }
         setGameToPosition(that.configuration.position);
         if (that.board) {
             that.board.set({fen: game.fen()});
@@ -1282,6 +1332,40 @@ let pgnBase = function (boardId, configuration) {
                 }
             }
 
+            if (hasMode('puzzle')) { // only relevant functions for puzzle mode
+                addEventListener(id('buttonsId') + "pgn", 'click', function () {
+                    togglePgn();
+                });
+                addEventListener(id('buttonsId') + 'nags', 'click', function () {
+                    toggleNagMenu();
+                });
+                addEventListener(id('buttonsId') + "deleteMoves", 'click', function () {
+                    const prev = that.mypgn.getMove(that.currentMove).prev;
+                    const fen = that.mypgn.getMove(prev).fen;
+                    that.mypgn.deleteMove(that.currentMove);
+                    //document.getElementById(id('movesId')).innerHtml = "";
+                    let myNode = document.getElementById(id('movesId'));
+                    while (myNode.firstChild) {
+                        myNode.removeChild(myNode.firstChild);
+                    }
+                    regenerateMoves(that.mypgn.getMoves());
+                    makeMove(null, prev, fen);
+                });
+                addEventListener(id('buttonsId') + "promoteVar", 'click', function () {
+                    let curr = that.currentMove;
+                    that.mypgn.promoteMove(that.currentMove);
+                    //document.getElementById(id('movesId')).html("");
+                    let myNode = document.getElementById(id('movesId'));
+                    while (myNode.firstChild) {
+                        myNode.removeChild(myNode.firstChild);
+                    }
+                    regenerateMoves(that.mypgn.getOrderedMoves());
+                    let fen = that.mypgn.getMove(curr).fen;
+                    makeMove(null, that.currentMove, fen);
+                });
+            }
+
+
             function togglePlay() {
                 if (timer.running()) {
                     timer.stop()
@@ -1374,7 +1458,8 @@ let pgnBase = function (boardId, configuration) {
         generateBoard: generateBoard,
         generateMoves: generateMoves,
         manualMove: manualMove,
-        onSnapEnd: onSnapEnd
+        onSnapEnd: onSnapEnd,
+        onPuzzleMove: onPuzzleMove
     };
 };
 
