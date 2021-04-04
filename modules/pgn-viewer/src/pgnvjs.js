@@ -206,28 +206,72 @@ let pgnBase = function (boardId, configuration) {
         that.board.set({fen: game.fen()})
     }
 
-    const onPuzzleMove = function (from, to, meta) {
-        let cur = that.currentMove;
-        let nextMove = that.mypgn.getMove(cur+1);
-        if (nextMove.from===from && nextMove.to===to) {
-            console.log("bravo!")
-            let next = cur+2;
-            if (next < that.mypgn.getMoves().length) {
-                let fen = that.mypgn.getMove(next).fen;
-                makeMove(next-1, next, fen);
+    const enablePuzzleButtons = function (enable) {
+        [id('buttonsId') + 'next', id('buttonsId') + 'last'].forEach(function (entry) {
+            if (enable) {
+                removeClass(entry, 'disable');
             } else {
-                console.log("PUZZLE finished - moving disabled");
-                that.board.set({
-                    movable: {
-                        free: false,
-                        color: undefined
-                    }
-                })
+                addClass(entry, 'disable');
             }
-        } else {
-            console.log("no, it is not correct move")
-            makeMove(cur, cur, null);
+        });
+    }
+
+    const onPuzzleMove = function (from, to, meta) {
+        let primMove = {from: from, to: to};
+        resolvePromotion(primMove).then( () => { onPuzzleMoveFinish() } )
+
+        function compareMoves(primary, move) {
+            if (primary.from===move.from && primary.to===move.to && Boolean(primary.promotion)==Boolean(move.notation.promotion)) {
+                if (Boolean(primary.promotion)) {
+                    let prStr = "=" + primary.promotion;
+                    let mvStr = move.notation.promotion.toLowerCase();
+                    return prStr === mvStr;
+                }
+                else return true;
+            } else return false;
         }
+
+        function onPuzzleMoveFinish() {
+            let cur = that.currentMove;
+            let nextMove = that.mypgn.getMove(cur+1);
+            if (compareMoves(primMove, nextMove)) {
+                console.log("bravo!")
+                let next = cur+2;
+                if (next < that.mypgn.getMoves().length) {
+                    let fen = that.mypgn.getMove(next).fen;
+                    makeMove(next-1, next, fen);
+                    if (that.currentPuzzleProgress < that.currentMove) {
+                        that.currentPuzzleProgress = that.currentMove;
+                        enablePuzzleButtons(false);
+                    }
+                } else {
+                    console.log("PUZZLE finished - moving disabled");
+                    that.board.set({
+                        movable: {
+                            free: false,
+                            color: undefined
+                        }
+                    })
+                }
+            } else {
+                console.log("no, it is not correct move")
+                makeMove(cur, cur, null);
+            }
+        }
+    }
+
+    const resolvePromotion = function(primMove) {
+        let from = primMove.from, to = primMove.to;
+        if ((that.mypgn.game.get(from).type === 'p') && ((to.substring(1, 2) === '8') || (to.substring(1, 2) === '1'))) {
+            return swal("Select the promotion figure", {
+                buttons: {
+                    queen: {text: "Queen", value: 'q'},
+                    rook: {text: "Rook", value: 'r'},
+                    bishop: {text: "Bishop", value: 'b'},
+                    knight: {text: 'Knight', value: 'n'}
+                }
+            }).then((value) => {primMove.promotion = value})
+        } else return Promise.resolve()
     }
 
     /**
@@ -242,18 +286,7 @@ let pgnBase = function (boardId, configuration) {
         //board.set({fen: game.fen()});
         const cur = that.currentMove;
         let primMove = {from: from, to: to};
-        if ((that.mypgn.game.get(from).type === 'p') && ((to.substring(1, 2) === '8') || (to.substring(1, 2) === '1'))) {
-            swal("Select the promotion figure", {
-                buttons: {
-                    queen: {text: "Queen", value: 'q'},
-                    rook: {text: "Rook", value: 'r'},
-                    bishop: {text: "Bishop", value: 'b'},
-                    knight: {text: 'Knight', value: 'n'}
-                }
-            }).then((value) => {primMove.promotion = value}).then( () => { onSnapEndFinish() })
-        } else {
-            onSnapEndFinish()
-        }
+        resolvePromotion(primMove).then( () => { onSnapEndFinish() } )
 
         function onSnapEndFinish() {
             that.currentMove = that.mypgn.addMove(primMove, cur);
@@ -350,6 +383,13 @@ let pgnBase = function (boardId, configuration) {
         const generateViewButtons = function (buttonDiv) {
             [["flipper", "fa-adjust"], ["first", "fa-fast-backward"], ["prev", "fa-step-backward"],
                 ["next", "fa-step-forward"], ["play", "fa-play-circle"], ["last", "fa-fast-forward"]].forEach(function (entry) {
+                addButton(entry, buttonDiv);
+            });
+        };
+        // Generates the puzzle buttons (only)
+        const generatePuzzleButtons = function (buttonDiv) {
+            [["flipper", "fa-adjust"], ["first", "fa-fast-backward"], ["prev", "fa-step-backward"],
+                ["next", "fa-step-forward"], ["last", "fa-fast-forward"]].forEach(function (entry) {
                 addButton(entry, buttonDiv);
             });
         };
@@ -461,7 +501,11 @@ let pgnBase = function (boardId, configuration) {
         /** Buttons */
         if (hasMode('view') || hasMode('edit') || hasMode('puzzle')) {
             const buttonsBoardDiv = createEle("div", id('buttonsId'), "buttons", theme, divBoard);
-            generateViewButtons(buttonsBoardDiv);
+            if (hasMode('puzzle')) {
+                generatePuzzleButtons(buttonsBoardDiv)
+            } else {
+                generateViewButtons(buttonsBoardDiv);
+            }
             if ( that.configuration.colorMarker ) {
                 createEle("div", id('colorMarkerId'), 'colorMarker' + " " + that.configuration.colorMarker, theme, buttonsBoardDiv);
             }
@@ -713,7 +757,7 @@ let pgnBase = function (boardId, configuration) {
         }
         if (hasMode('puzzle')) {
             makeMove(null,0,null);
-            //game.load(boardConfiguration.position);
+            that.currentPuzzleProgress = that.currentMove;
             let toMove = (game.turn() == 'w') ? 'white' : 'black';
             that.board.set({
                 movable: Object.assign({}, that.board.state.movable, {color: toMove, dests: possibleMoves(game)}),
@@ -1190,6 +1234,7 @@ let pgnBase = function (boardId, configuration) {
                     fen = that.mypgn.getMove(0).fen;
                     makeMove(null, 0, fen);
                 } else {
+                    if (hasMode('puzzle') && that.currentMove >= that.currentPuzzleProgress) return;
                     const next = that.mypgn.getMove(that.currentMove).next;
                     if (typeof next == 'undefined') return false;
                     fen = that.mypgn.getMove(next).fen;
@@ -1331,40 +1376,6 @@ let pgnBase = function (boardId, configuration) {
                     };
                 }
             }
-
-            if (hasMode('puzzle')) { // only relevant functions for puzzle mode
-                addEventListener(id('buttonsId') + "pgn", 'click', function () {
-                    togglePgn();
-                });
-                addEventListener(id('buttonsId') + 'nags', 'click', function () {
-                    toggleNagMenu();
-                });
-                addEventListener(id('buttonsId') + "deleteMoves", 'click', function () {
-                    const prev = that.mypgn.getMove(that.currentMove).prev;
-                    const fen = that.mypgn.getMove(prev).fen;
-                    that.mypgn.deleteMove(that.currentMove);
-                    //document.getElementById(id('movesId')).innerHtml = "";
-                    let myNode = document.getElementById(id('movesId'));
-                    while (myNode.firstChild) {
-                        myNode.removeChild(myNode.firstChild);
-                    }
-                    regenerateMoves(that.mypgn.getMoves());
-                    makeMove(null, prev, fen);
-                });
-                addEventListener(id('buttonsId') + "promoteVar", 'click', function () {
-                    let curr = that.currentMove;
-                    that.mypgn.promoteMove(that.currentMove);
-                    //document.getElementById(id('movesId')).html("");
-                    let myNode = document.getElementById(id('movesId'));
-                    while (myNode.firstChild) {
-                        myNode.removeChild(myNode.firstChild);
-                    }
-                    regenerateMoves(that.mypgn.getOrderedMoves());
-                    let fen = that.mypgn.getMove(curr).fen;
-                    makeMove(null, that.currentMove, fen);
-                });
-            }
-
 
             function togglePlay() {
                 if (timer.running()) {

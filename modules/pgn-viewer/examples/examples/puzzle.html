@@ -12,7 +12,7 @@
 <body>
 <div id="board" style="width: 500px" class='merida zeit'></div>
 <script>
-  var pgn = '[Event "Monday Fight Arena"]\n' +
+  var pgn1 = '[Event "Monday Fight Arena"]\n' +
     '[Site "https://lichess.org/Rpqt9o3S"]\n' +
     '[Date "2021.02.01"]\n' +
     '[Round "?"]\n' +
@@ -46,7 +46,38 @@
     ' 24. Kc1 { Kc1 (mate in -1) }\n' +
     ' 24... Qc2# { Qc2# (mate in -1) Bh6+ (mate in -2) Qd2+ (mate in -2) }\n' +
     ' 1-0';
-  var cfg = { pgn: pgn, locale: 'en', pieceStyle: 'merida' };
+  var pgn = '[Event "Monday Fight Arena"]\n' +
+    '[Site "https://lichess.org/avPCUyuW"]\n' +
+    '[Date "2021.03.15"]\n' +
+    '[Round "?"]\n' +
+    '[White "SumaSpandy"]\n' +
+    '[Black "Arytmik"]\n' +
+    '[Result "0-1"]\n' +
+    '[BlackElo "1283"]\n' +
+    '[BlackRatingDiff "+4"]\n' +
+    '[ECO "B18"]\n' +
+    '[FEN "r3kbr1/pp1n1p2/2p1P2p/5p2/2B3bq/6N1/PPP2PPP/R2QR1K1 b q - 0 15"]\n' +
+    '[PuzzleCategory "Material"]\n' +
+    '[PuzzleEngine "Stockfish 13"]\n' +
+    '[PuzzleMakerVersion "0.5"]\n' +
+    '[PuzzleWinner "White"]\n' +
+    '[SetUp "1"]\n' +
+    '[Termination "Normal"]\n' +
+    '[TimeControl "180+2"]\n' +
+    '[UTCDate "2021.03.15"]\n' +
+    '[UTCTime "19:41:16"]\n' +
+    '[Variant "Standard"]\n' +
+    '[WhiteElo "944"]\n' +
+    '[WhiteRatingDiff "-1"]\n' +
+    '\n' +
+    '{ score: -160 -> 740 }\n' +
+    ' 15... Bxd1 { fxe6 (-160) Bxd1 (660) }\n' +
+    ' 16. exf7+ { exf7+ (725) Raxd1 (-675) exd7+ (-709) }\n' +
+    ' 16... Kd8 { Kd8 (725) }\n' +
+    ' 17. fxg8=Q { fxg8=Q (736) Re8+ (111) fxg8=R (-478) }\n' +
+    ' 17... Bxc2 { Bxc2 (732) Bg4 (778) Bh5 (910) }\n' +
+    ' 0-1';
+  var cfg = { pgn: pgn, locale: 'en', pieceStyle: 'merida', colorMarker: 'circle' };
   var board = PGNV.pgnPuzzle('board', cfg);
 </script>
 </body>
