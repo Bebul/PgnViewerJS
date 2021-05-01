@@ -237,6 +237,7 @@ let pgnBase = function (boardId, configuration) {
             if (compareMoves(primMove, nextMove)) {
                 console.log("bravo!")
                 let next = cur+2;
+                let puzzleCompleted = true; // or possibly falsified after couple of lines
                 if (next < that.mypgn.getMoves().length) {
                     let fen = that.mypgn.getMove(next).fen;
                     makeMove(next-1, next, fen);
@@ -244,7 +245,10 @@ let pgnBase = function (boardId, configuration) {
                         that.currentPuzzleProgress = that.currentMove;
                         enablePuzzleButtons(false);
                     }
-                } else {
+                    // compare current puzzleProgress move number with moves count - 1, as puzzle typically ends with last move of defending side
+                    puzzleCompleted = that.currentMove >= that.mypgn.getMoves().length - 1;
+                }
+                if (puzzleCompleted) {
                     console.log("PUZZLE finished - moving disabled");
                     that.board.set({
                         movable: {
