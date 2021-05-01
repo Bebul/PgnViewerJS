@@ -154,13 +154,13 @@ let pgnBase = function (boardId, configuration) {
         ele.addEventListener(event, func);
     }
 
-    function toggleColorMarker() {
+    function updateColorMarker(colOnMove) { // @param: colOnMove is char 'b' or 'w'
         let ele = document.getElementById(id('colorMarkerId'));
         if (!ele) return;
-        if (ele.classList.contains('cm-black')) {
+        if (colOnMove === 'b') {
+          if (!ele.classList.contains('cm-black')) ele.classList.add('cm-black');
+        } else if (ele.classList.contains('cm-black')) {
             ele.classList.remove('cm-black');
-        } else {
-            ele.classList.add('cm-black');
         }
     }
 
@@ -236,6 +236,7 @@ let pgnBase = function (boardId, configuration) {
             let nextMove = that.mypgn.getMove(cur+1);
             if (compareMoves(primMove, nextMove)) {
                 console.log("bravo!")
+                updateColorMarker(nextMove.turn === 'w' ? 'b' : 'w' );  // swap colors
                 let next = cur+2;
                 let puzzleCompleted = true; // or possibly falsified after couple of lines
                 if (next < that.mypgn.getMoves().length) {
@@ -327,7 +328,7 @@ let pgnBase = function (boardId, configuration) {
             if (fenView) {
                 fenView.value = move.fen;
             }
-            toggleColorMarker();
+            updateColorMarker(move.turn);
         }
     };
 
@@ -759,15 +760,6 @@ let pgnBase = function (boardId, configuration) {
                 turnColor: toMove, check: game.in_check()
             });
         }
-        if (hasMode('puzzle')) {
-            makeMove(null,0,null);
-            that.currentPuzzleProgress = that.currentMove;
-            let toMove = (game.turn() == 'w') ? 'white' : 'black';
-            that.board.set({
-                movable: Object.assign({}, that.board.state.movable, {color: toMove, dests: possibleMoves(game)}),
-                turnColor: toMove, check: game.in_check()
-            });
-        }
         if (that.configuration.colorMarker) {
             if ( (that.configuration.position != 'start') &&
                 (that.configuration.position.split(' ')[1] === 'b') ) {
@@ -776,6 +768,15 @@ let pgnBase = function (boardId, configuration) {
                     ele.classList.add('cm-black');
                 }
             }
+        }
+        if (hasMode('puzzle')) { // it must follow after colorMarker initialization as makeMove is swapping it
+            makeMove(null,0,null);
+            that.currentPuzzleProgress = that.currentMove;
+            let toMove = (game.turn() == 'w') ? 'white' : 'black';
+            that.board.set({
+                movable: Object.assign({}, that.board.state.movable, {color: toMove, dests: possibleMoves(game)}),
+                turnColor: toMove, check: game.in_check()
+            });
         }
         return that.board;
     };
@@ -1101,7 +1102,7 @@ let pgnBase = function (boardId, configuration) {
         if (fenView) {
             fenView.value = fen;
         }
-        toggleColorMarker();
+        updateColorMarker(game.turn());
         updateUI(next);
     };
 
